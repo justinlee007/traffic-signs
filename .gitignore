@@ -4,3 +4,8 @@ data
 models
 *.swp
 *.p
+
+__pycache__
+.DS_Store
+.idea/
+
