@@ -7,15 +7,20 @@ import data_reader
 
 
 def pickle_local_images(image_dir="./TrafficSignImages/", pickle_file="../local_test.p"):
+    """
+    Tool for pickling BMP files in the given image_dir.  Images must be 32x32x3 and have a classifier at the end.
+    :param image_dir: must contain only BMP files
+    :param pickle_file: output pickle
+    :return:
+    """
     data = {"features": [], "labels": []}
     file = open(pickle_file, "wb")
     for filename in os.listdir(image_dir):
         image = matplotlib.image.imread(image_dir + filename, "bmp")
         data["features"].append(image)
         label = filename[(filename.find('-') + 1):filename.find('.')]
-        # print("filename={}, label={}".format(filename, label))
+        print("Appending {} with label={}".format(filename, label))
         data["labels"].append(label)
-    print(data)
     pickle.dump(data, file)
     file.close()
 

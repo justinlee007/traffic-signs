@@ -17,9 +17,13 @@ BATCH_SIZE = 64
 UPPER_THRESHOLD = 0.988
 
 
-# LeNet architecture:
-# INPUT -> CONV -> ACT -> POOL -> CONV -> ACT -> POOL -> FLATTEN -> FC -> ACT -> FC
-def LeNet(x, y):
+def create_lenet(x, y):
+    """
+    LeNet architecture: INPUT -> CONV -> ACT -> POOL -> CONV -> ACT -> POOL -> FLATTEN -> FC -> ACT -> FC
+    :param x:
+    :param y:
+    :return:
+    """
     # Reshape from 2D to 4D. This prepares the data for convolutional and pooling layers.
     x = tf.reshape(x, (-1, 32, 32, 1))
     # Squish values from 0-255 to 0-1.
@@ -63,13 +67,15 @@ def LeNet(x, y):
 
 
 def eval_data(features, labels):
-    # Given a dataset as input returns the loss and accuracy.
+    """
+    Given a dataset as input returns the loss and accuracy.
+    :param features:
+    :param labels:
+    :return:
+    """
     total_accuracy, total_loss = 0, 0
     if len(features) < BATCH_SIZE:
-        num_examples = 1
-        loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: features, y: labels})
-        total_accuracy = (acc * len(features))
-        total_loss = (loss * len(features))
+        total_loss, total_accuracy = sess.run([loss_op, accuracy_op], feed_dict={x: features, y: labels})
     else:
         steps_per_epoch = len(features) // BATCH_SIZE
         num_examples = steps_per_epoch * BATCH_SIZE
@@ -78,7 +84,9 @@ def eval_data(features, labels):
             loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
             total_accuracy += (acc * len(batch_features))
             total_loss += (loss * len(batch_features))
-    return total_loss / num_examples, total_accuracy / num_examples
+        total_loss /= num_examples
+        total_accuracy /= num_examples
+    return total_loss, total_accuracy
 
 
 def next_batch(step, features, labels):
@@ -97,7 +105,6 @@ if __name__ == '__main__':
     train_file = results.train_file
     test_file = results.test_file
     save_file = results.save_file
-    print("train_file={}, test_file={}, save_file={}".format(train_file, test_file, save_file))
 
     # Load data
     data = data_reader.read_pickle_sets(train_file, test_file)
@@ -115,7 +122,7 @@ if __name__ == '__main__':
     # Classify over 43 labels.
     y = tf.placeholder(tf.float32, (None, num_classes))
     # Create the LeNet.
-    fc2 = LeNet(x, num_classes)
+    fc2 = create_lenet(x, num_classes)
 
     loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc2, y))
     opt = tf.train.AdamOptimizer()

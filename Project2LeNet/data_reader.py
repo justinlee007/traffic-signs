@@ -5,8 +5,13 @@ import one_hot_encoder as ohe
 import splitter
 
 
-# Unpickle the images and pre-process them
 def read_pickle_sets(training_file="../train.p", testing_file="../test.p"):
+    """
+    Unpickle the images and pre-process them
+    :param training_file:
+    :param testing_file:
+    :return:
+    """
     data = unpickle_files(training_file, testing_file)
 
     train_features = data["train_features"]
