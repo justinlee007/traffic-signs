@@ -17,9 +17,9 @@ def pickle_local_images(image_dir="./TrafficSignImages/", pickle_file="../local_
     file = open(pickle_file, "wb")
     for filename in os.listdir(image_dir):
         image = matplotlib.image.imread(image_dir + filename, "bmp")
-        data["features"].append(image)
         label = filename[(filename.find('-') + 1):filename.find('.')]
         print("Appending {} with label={}".format(filename, label))
+        data["features"].append(image)
         data["labels"].append(label)
     pickle.dump(data, file)
     file.close()
