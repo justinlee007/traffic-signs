@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import data_reader
 
 
-def read_signnames():
+def read_signnames(filename="../signnames.csv"):
     # Read signnames.csv and create a list of labels
     signnames = []
-    with open("signnames.csv", "rt") as csvfile:
+    with open(filename, "rt") as csvfile:
         signreader = csv.reader(csvfile, delimiter=',')
         for index, row in enumerate(signreader):
             if index == 0:

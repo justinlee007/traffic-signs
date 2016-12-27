@@ -6,8 +6,8 @@ import splitter
 
 
 # Unpickle the images and pre-process them
-def read_pickle_sets(train_dir="./"):
-    data = unpickle_files(train_dir)
+def read_pickle_sets(training_file="../train.p", testing_file="../test.p"):
+    data = unpickle_files(training_file, testing_file)
 
     train_features = data["train_features"]
     train_labels = data["train_labels"]
@@ -46,11 +46,8 @@ def read_pickle_sets(train_dir="./"):
             "num_classes": num_classes}
 
 
-def unpickle_files(train_dir="./"):
+def unpickle_files(training_file="../train.p", testing_file="../test.p"):
     # Load pickled data
-    training_file = train_dir + "train.p"
-    testing_file = train_dir + "test.p"
-
     print("Loading training_file=\"{}\"".format(training_file))
     with open(training_file, mode='rb') as f:
         train = pickle.load(f)

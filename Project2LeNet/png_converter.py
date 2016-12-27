@@ -1,7 +1,7 @@
 import csv
 
 import matplotlib.image
-import matplotlib.pyplot as plt
+
 
 def convert_to_array():
     signnames = []
@@ -13,7 +13,9 @@ def convert_to_array():
             signnames.append(row[1])
 
     print(signnames)
-    image = matplotlib.image.imread("./TrafficSignImages/20161128_164531.bmp", "bmp")
+    image = matplotlib.image.imread("./TrafficSignImages/20161128_164531-14.bmp", "bmp")
     print("image={}".format(image))
 
-convert_to_array()
+
+if __name__ == '__main__':
+    convert_to_array()
