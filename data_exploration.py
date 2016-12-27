@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import data_reader
 
 
-def read_signnames(filename="../signnames.csv"):
+def read_signnames(filename="signnames.csv"):
     # Read signnames.csv and create a list of labels
     signnames = []
     with open(filename, "rt") as csvfile:

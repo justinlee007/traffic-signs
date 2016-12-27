@@ -5,22 +5,19 @@ import one_hot_encoder as ohe
 import splitter
 
 
-# Unpickle the images and pre-process them
-def read_pickle_sets(train_dir="./"):
-    # Load pickled data
-    training_file = train_dir + "train.p"
-    testing_file = train_dir + "test.p"
+def read_pickle_sets(training_file="train.p", testing_file="test.p"):
+    """
+    Unpickle the images and pre-process them
+    :param training_file:
+    :param testing_file:
+    :return:
+    """
+    data = unpickle_files(training_file, testing_file)
 
-    print("Loading training_file=\"{}\"".format(training_file))
-    with open(training_file, mode='rb') as f:
-        train = pickle.load(f)
-    print("Loading testing_file=\"{}\"".format(testing_file))
-    with open(testing_file, mode='rb') as f:
-        test = pickle.load(f)
-
-    # Delineate features and labels
-    train_features, train_labels = train['features'], train['labels']
-    test_features, test_labels = test['features'], test['labels']
+    train_features = data["train_features"]
+    train_labels = data["train_labels"]
+    test_features = data["test_features"]
+    test_labels = data["test_labels"]
 
     # Total number of labels
     classes = set(train_labels)
@@ -52,3 +49,20 @@ def read_pickle_sets(train_dir="./"):
             "valid_features": valid_features, "valid_labels": valid_labels,
             "test_features": test_features, "test_labels": test_labels,
             "num_classes": num_classes}
+
+
+def unpickle_files(training_file="../train.p", testing_file="../test.p"):
+    # Load pickled data
+    print("Loading training_file=\"{}\"".format(training_file))
+    with open(training_file, mode='rb') as f:
+        train = pickle.load(f)
+    print("Loading testing_file=\"{}\"".format(testing_file))
+    with open(testing_file, mode='rb') as f:
+        test = pickle.load(f)
+
+    # Delineate features and labels
+    train_features, train_labels = train["features"], train["labels"]
+    test_features, test_labels = test["features"], test["labels"]
+
+    return {"train_features": train_features, "train_labels": train_labels,
+            "test_features": test_features, "test_labels": test_labels}

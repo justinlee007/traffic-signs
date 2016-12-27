@@ -6,7 +6,7 @@ import matplotlib.image
 import data_reader
 
 
-def pickle_local_images(image_dir="./TrafficSignImages/", pickle_file="../local_test.p"):
+def pickle_local_images(image_dir="./TrafficSignImages/", pickle_file="local_test.p"):
     """
     Tool for pickling BMP files in the given image_dir.  Images must be 32x32x3 and have a classifier at the end.
     :param image_dir: must contain only BMP files
