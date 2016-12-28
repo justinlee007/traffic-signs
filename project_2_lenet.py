@@ -12,7 +12,6 @@ from tqdm import tqdm
 
 import data_reader
 
-NUM_EPOCHS = 1000
 BATCH_SIZE = 64
 UPPER_THRESHOLD = 0.988
 
@@ -66,29 +65,6 @@ def create_lenet(x, y):
     return tf.matmul(fc1, fc2_W) + fc2_b
 
 
-def eval_data(features, labels):
-    """
-    Given a dataset as input returns the loss and accuracy.
-    :param features:
-    :param labels:
-    :return:
-    """
-    total_accuracy, total_loss = 0, 0
-    if len(features) < BATCH_SIZE:
-        total_loss, total_accuracy = sess.run([loss_op, accuracy_op], feed_dict={x: features, y: labels})
-    else:
-        steps_per_epoch = len(features) // BATCH_SIZE
-        num_examples = steps_per_epoch * BATCH_SIZE
-        for step in range(steps_per_epoch):
-            batch_features, batch_labels = next_batch(step, features, labels)
-            loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
-            total_accuracy += (acc * len(batch_features))
-            total_loss += (loss * len(batch_features))
-        total_loss /= num_examples
-        total_accuracy /= num_examples
-    return total_loss, total_accuracy
-
-
 def next_batch(step, features, labels):
     batch_start = step * BATCH_SIZE
     batch_features = features[batch_start:batch_start + BATCH_SIZE]
@@ -96,16 +72,7 @@ def next_batch(step, features, labels):
     return batch_features, batch_labels
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="LeNet Architecture for GTSRB dataset")
-    parser.add_argument("-train", action="store", dest="train_file", default="train.p", help="Training Pickle")
-    parser.add_argument("-test", action="store", dest="test_file", default="test.p", help="Testing pickle")
-    parser.add_argument("-s", action="store", dest="save_file", help="Tensor save file to restore")
-    results = parser.parse_args()
-    train_file = results.train_file
-    test_file = results.test_file
-    save_file = results.save_file
-
+def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epochs=1000):
     # Load data
     data = data_reader.read_pickle_sets(train_file, test_file)
     train_features = data["train_features"]
@@ -130,9 +97,9 @@ if __name__ == '__main__':
     correct_prediction = tf.equal(tf.argmax(fc2, 1), tf.argmax(y, 1))
     accuracy_op = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-    steps_per_epoch = len(train_features) // BATCH_SIZE
-    print("BATCH_SIZE={}, EPOCHS={}, steps_per_epoch={}, image_shape={}".format(
-        BATCH_SIZE, NUM_EPOCHS, steps_per_epoch, image_shape))
+    training_steps = len(train_features) // BATCH_SIZE
+    print("BATCH_SIZE={}, num_epochs={}, training_steps={}, image_shape={}".format(
+        BATCH_SIZE, num_epochs, training_steps, image_shape))
 
     # Class used to save and/or restore Tensor Variables
     saver = tf.train.Saver()
@@ -142,19 +109,28 @@ if __name__ == '__main__':
             sess.run(tf.initialize_all_variables())
 
             # Progress bar
-            epochs = tqdm(range(NUM_EPOCHS), desc="Training Model", file=sys.stdout, unit="Epoch")
+            epochs = tqdm(range(int(num_epochs)), desc="Training Model", file=sys.stdout, unit="Epoch")
 
             # Train model
             for i in epochs:
                 # Loop over all batches
-                for step in range(steps_per_epoch):
+                for step in range(training_steps):
                     batch_features, batch_labels = next_batch(step, train_features, train_labels)
                     loss = sess.run(train_op, feed_dict={x: batch_features, y: batch_labels})
 
-                val_loss, val_acc = eval_data(valid_features, valid_labels)
-                epochs.write(
-                    "Epoch {}: Validation loss={:.4f}, Validation accuracy={:.4f}".format((i + 1), val_loss, val_acc))
-                if val_acc > UPPER_THRESHOLD:
+                valid_accuracy, valid_loss = 0, 0
+                valid_steps = len(valid_features) // BATCH_SIZE
+                num_examples = valid_steps * BATCH_SIZE
+                for step in range(valid_steps):
+                    batch_features, batch_labels = next_batch(step, valid_features, valid_labels)
+                    loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
+                    valid_accuracy += (acc * len(batch_features))
+                    valid_loss += (loss * len(batch_features))
+                valid_loss /= num_examples
+                valid_accuracy /= num_examples
+                epochs.write("Epoch {}: Validation loss={:.4f}, Validation accuracy={:.4f}".
+                             format((i + 1), valid_loss, valid_accuracy))
+                if valid_accuracy > UPPER_THRESHOLD:
                     epochs.write("Threshold reached: {}".format(UPPER_THRESHOLD))
                     epochs.close()
                     break
@@ -165,12 +141,48 @@ if __name__ == '__main__':
             epochs.write("Trained Model Saved.")
 
             # Evaluate on the test data
-            test_loss, test_acc = eval_data(test_features, test_labels)
-            epochs.write("Test loss={:.4f}, Test accuracy={:.4f}".format(test_loss, test_acc))
+            test_accuracy, test_loss = 0, 0
+            test_steps = len(test_features) // BATCH_SIZE
+            num_examples = test_steps * BATCH_SIZE
+            for step in range(test_steps):
+                batch_features, batch_labels = next_batch(step, test_features, test_labels)
+                loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
+                test_accuracy += (acc * len(batch_features))
+                test_loss += (loss * len(batch_features))
+            test_loss /= num_examples
+            test_accuracy /= num_examples
+            epochs.write("Test loss={:.4f}, Test accuracy={:.4f}".format(test_loss, test_accuracy))
         else:
             print("Restoring session from {}".format(save_file))
             saver.restore(sess, save_file)
 
             # Evaluate on the test data
-            test_loss, test_acc = eval_data(test_features, test_labels)
-            print("Test loss={:.4f}, Test accuracy={:.4f}".format(test_loss, test_acc))
+            test_accuracy, test_loss = 0, 0
+            if len(test_features) < BATCH_SIZE:
+                test_loss, test_accuracy = sess.run([loss_op, accuracy_op],
+                                                    feed_dict={x: test_features, y: test_labels})
+            else:
+                test_steps = len(test_features) // BATCH_SIZE
+                num_examples = test_steps * BATCH_SIZE
+                for step in range(test_steps):
+                    batch_features, batch_labels = next_batch(step, test_features, test_labels)
+                    loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
+                    test_accuracy += (acc * len(batch_features))
+                    test_loss += (loss * len(batch_features))
+                test_loss /= num_examples
+                test_accuracy /= num_examples
+            print("Test loss={:.4f}, Test accuracy={:.4f}".format(test_loss, test_accuracy))
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="LeNet Architecture for GTSRB dataset")
+    parser.add_argument("-train", action="store", dest="train_file", default="train.p", help="Training Pickle")
+    parser.add_argument("-test", action="store", dest="test_file", default="test.p", help="Testing pickle")
+    parser.add_argument("-s", action="store", dest="save_file", default=None, help="Tensor save file to restore")
+    parser.add_argument("-e", action="store", dest="num_epochs", default=1000, help="Number of training epochs")
+    results = parser.parse_args()
+    train_file = results.train_file
+    test_file = results.test_file
+    save_file = results.save_file
+    num_epochs = results.num_epochs
+    run_lenet(train_file=train_file, test_file=test_file, save_file=save_file, num_epochs=num_epochs)
