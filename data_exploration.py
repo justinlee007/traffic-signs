@@ -47,5 +47,30 @@ def plot_signs():
     plt.show()
 
 
+def plot_local_signs():
+    data = data_reader.unpickle_files(training_file="local_test.p")
+    x_train = data["train_features"]
+    y_train = data["train_labels"]
+    signnames = read_signnames()
+
+    # Show an example of each class of sign with its corresponding label
+    current_index = 0
+    num_columns = 5
+    num_rows = 3
+
+    fig, axarr = plt.subplots(num_rows, num_columns, figsize=(15, 15))
+    fig.suptitle("Example Images For Each Sign Type", fontsize=14)
+
+    for row in range(num_rows):
+        for column in range(num_columns):
+            image = axarr[row, column]
+            image.axis('off')
+            image.imshow(x_train[current_index])
+            image.set_title(signnames[int(y_train[current_index])], fontsize=8)
+            current_index += 1
+    plt.show()
+
+
 if __name__ == '__main__':
     plot_signs()
+    plot_local_signs()

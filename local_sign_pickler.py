@@ -27,4 +27,4 @@ def pickle_local_images(image_dir="./TrafficSignImages/", pickle_file="local_tes
 
 if __name__ == '__main__':
     pickle_local_images()
-    data = data_reader.unpickle_files("../train.p", "../local_test.p")
+    data = data_reader.unpickle_files("train.p", "local_test.p")

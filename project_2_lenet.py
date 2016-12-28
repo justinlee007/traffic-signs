@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 import data_reader
 
-NUM_EPOCHS = 2
+NUM_EPOCHS = 1000
 BATCH_SIZE = 64
 UPPER_THRESHOLD = 0.988
 

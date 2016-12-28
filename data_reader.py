@@ -51,7 +51,7 @@ def read_pickle_sets(training_file="train.p", testing_file="test.p"):
             "num_classes": num_classes}
 
 
-def unpickle_files(training_file="../train.p", testing_file="../test.p"):
+def unpickle_files(training_file="train.p", testing_file="test.p"):
     # Load pickled data
     print("Loading training_file=\"{}\"".format(training_file))
     with open(training_file, mode='rb') as f:
