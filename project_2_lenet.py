@@ -97,7 +97,10 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
     correct_prediction = tf.equal(tf.argmax(fc2, 1), tf.argmax(y, 1))
     accuracy_op = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-    training_steps = len(train_features) // BATCH_SIZE
+    if len(test_features) < BATCH_SIZE:
+        training_steps = 1
+    else:
+        training_steps = len(train_features) // BATCH_SIZE
     print("BATCH_SIZE={}, num_epochs={}, training_steps={}, image_shape={}".format(
         BATCH_SIZE, num_epochs, training_steps, image_shape))
 
@@ -113,21 +116,29 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
 
             # Train model
             for i in epochs:
-                # Loop over all batches
-                for step in range(training_steps):
-                    batch_features, batch_labels = next_batch(step, train_features, train_labels)
-                    loss = sess.run(train_op, feed_dict={x: batch_features, y: batch_labels})
+                if training_steps == 1:
+                    loss = sess.run(train_op, feed_dict={x: train_features, y: train_labels})
+                else:
+                    # Loop over all batches
+                    for step in range(training_steps):
+                        batch_features, batch_labels = next_batch(step, train_features, train_labels)
+                        loss = sess.run(train_op, feed_dict={x: batch_features, y: batch_labels})
 
                 valid_accuracy, valid_loss = 0, 0
-                valid_steps = len(valid_features) // BATCH_SIZE
-                num_examples = valid_steps * BATCH_SIZE
-                for step in range(valid_steps):
-                    batch_features, batch_labels = next_batch(step, valid_features, valid_labels)
-                    loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
-                    valid_accuracy += (acc * len(batch_features))
-                    valid_loss += (loss * len(batch_features))
-                valid_loss /= num_examples
-                valid_accuracy /= num_examples
+                if len(test_features) < BATCH_SIZE:
+                    valid_loss, valid_accuracy = sess.run([loss_op, accuracy_op],
+                                                          feed_dict={x: valid_features, y: valid_labels})
+                else:
+                    valid_steps = len(valid_features) // BATCH_SIZE
+                    num_examples = valid_steps * BATCH_SIZE
+                    for step in range(valid_steps):
+                        batch_features, batch_labels = next_batch(step, valid_features, valid_labels)
+                        loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
+                        valid_accuracy += (acc * len(batch_features))
+                        valid_loss += (loss * len(batch_features))
+                    valid_loss /= num_examples
+                    valid_accuracy /= num_examples
+
                 epochs.write("Epoch {}: Validation loss={:.4f}, Validation accuracy={:.4f}".
                              format((i + 1), valid_loss, valid_accuracy))
                 if valid_accuracy > UPPER_THRESHOLD:
@@ -142,15 +153,19 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
 
             # Evaluate on the test data
             test_accuracy, test_loss = 0, 0
-            test_steps = len(test_features) // BATCH_SIZE
-            num_examples = test_steps * BATCH_SIZE
-            for step in range(test_steps):
-                batch_features, batch_labels = next_batch(step, test_features, test_labels)
-                loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
-                test_accuracy += (acc * len(batch_features))
-                test_loss += (loss * len(batch_features))
-            test_loss /= num_examples
-            test_accuracy /= num_examples
+            if len(test_features) < BATCH_SIZE:
+                test_loss, test_accuracy = sess.run([loss_op, accuracy_op],
+                                                    feed_dict={x: test_features, y: test_labels})
+            else:
+                test_steps = len(test_features) // BATCH_SIZE
+                num_examples = test_steps * BATCH_SIZE
+                for step in range(test_steps):
+                    batch_features, batch_labels = next_batch(step, test_features, test_labels)
+                    loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
+                    test_accuracy += (acc * len(batch_features))
+                    test_loss += (loss * len(batch_features))
+                test_loss /= num_examples
+                test_accuracy /= num_examples
             epochs.write("Test loss={:.4f}, Test accuracy={:.4f}".format(test_loss, test_accuracy))
         else:
             print("Restoring session from {}".format(save_file))
