@@ -16,11 +16,11 @@ BATCH_SIZE = 64
 UPPER_THRESHOLD = 0.988
 
 
-def create_lenet(x, y):
+def create_lenet(x, num_classes):
     """
     LeNet architecture: INPUT -> CONV -> ACT -> POOL -> CONV -> ACT -> POOL -> FLATTEN -> FC -> ACT -> FC
     :param x:
-    :param y:
+    :param num_classes:
     :return:
     """
     # Reshape from 2D to 4D. This prepares the data for convolutional and pooling layers.
@@ -60,8 +60,8 @@ def create_lenet(x, y):
     fc1 = tf.matmul(fc1, fc1_W) + fc1_b
     fc1 = tf.nn.relu(fc1)
 
-    fc2_W = tf.Variable(tf.truncated_normal(shape=(120, y)))
-    fc2_b = tf.Variable(tf.zeros(y))
+    fc2_W = tf.Variable(tf.truncated_normal(shape=(120, num_classes)))
+    fc2_b = tf.Variable(tf.zeros(num_classes))
     return tf.matmul(fc1, fc2_W) + fc2_b
 
 
