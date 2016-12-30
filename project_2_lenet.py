@@ -72,6 +72,23 @@ def next_batch(step, features, labels):
     return batch_features, batch_labels
 
 
+def eval_on_data(features, x, labels, y, loss_op, acc_op, sess):
+    total_loss, total_acc = 0, 0
+    if len(features) < BATCH_SIZE:
+        total_loss, total_acc = sess.run([loss_op, acc_op], feed_dict={x: features, y: labels})
+    else:
+        valid_steps = len(features) // BATCH_SIZE
+        num_examples = valid_steps * BATCH_SIZE
+        for step in range(valid_steps):
+            batch_features, batch_labels = next_batch(step, features, labels)
+            loss, acc = sess.run([loss_op, acc_op], feed_dict={x: batch_features, y: batch_labels})
+            total_loss += (loss * len(batch_features))
+            total_acc += (acc * len(batch_features))
+        total_loss /= num_examples
+        total_acc /= num_examples
+    return total_loss, total_acc
+
+
 def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epochs=1000):
     # Load data
     data = data_reader.read_pickle_sets(train_file, test_file)
@@ -117,28 +134,15 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
             # Train model
             for i in epochs:
                 if training_steps == 1:
-                    loss = sess.run(train_op, feed_dict={x: train_features, y: train_labels})
+                    sess.run(train_op, feed_dict={x: train_features, y: train_labels})
                 else:
                     # Loop over all batches
                     for step in range(training_steps):
                         batch_features, batch_labels = next_batch(step, train_features, train_labels)
-                        loss = sess.run(train_op, feed_dict={x: batch_features, y: batch_labels})
+                        sess.run(train_op, feed_dict={x: batch_features, y: batch_labels})
 
-                valid_accuracy, valid_loss = 0, 0
-                if len(test_features) < BATCH_SIZE:
-                    valid_loss, valid_accuracy = sess.run([loss_op, accuracy_op],
-                                                          feed_dict={x: valid_features, y: valid_labels})
-                else:
-                    valid_steps = len(valid_features) // BATCH_SIZE
-                    num_examples = valid_steps * BATCH_SIZE
-                    for step in range(valid_steps):
-                        batch_features, batch_labels = next_batch(step, valid_features, valid_labels)
-                        loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
-                        valid_accuracy += (acc * len(batch_features))
-                        valid_loss += (loss * len(batch_features))
-                    valid_loss /= num_examples
-                    valid_accuracy /= num_examples
-
+                valid_loss, valid_accuracy = eval_on_data(valid_features, x, valid_labels, y, loss_op, accuracy_op,
+                                                          sess)
                 epochs.write("Epoch {}: Validation loss={:.4f}, Validation accuracy={:.4f}".
                              format((i + 1), valid_loss, valid_accuracy))
                 if valid_accuracy > UPPER_THRESHOLD:
@@ -152,40 +156,14 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
             epochs.write("Trained Model Saved.")
 
             # Evaluate on the test data
-            test_accuracy, test_loss = 0, 0
-            if len(test_features) < BATCH_SIZE:
-                test_loss, test_accuracy = sess.run([loss_op, accuracy_op],
-                                                    feed_dict={x: test_features, y: test_labels})
-            else:
-                test_steps = len(test_features) // BATCH_SIZE
-                num_examples = test_steps * BATCH_SIZE
-                for step in range(test_steps):
-                    batch_features, batch_labels = next_batch(step, test_features, test_labels)
-                    loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
-                    test_accuracy += (acc * len(batch_features))
-                    test_loss += (loss * len(batch_features))
-                test_loss /= num_examples
-                test_accuracy /= num_examples
+            test_loss, test_accuracy = eval_on_data(test_features, x, test_labels, y, loss_op, accuracy_op, sess)
             epochs.write("Test loss={:.4f}, Test accuracy={:.4f}".format(test_loss, test_accuracy))
         else:
             print("Restoring session from {}".format(save_file))
             saver.restore(sess, save_file)
 
             # Evaluate on the test data
-            test_accuracy, test_loss = 0, 0
-            if len(test_features) < BATCH_SIZE:
-                test_loss, test_accuracy = sess.run([loss_op, accuracy_op],
-                                                    feed_dict={x: test_features, y: test_labels})
-            else:
-                test_steps = len(test_features) // BATCH_SIZE
-                num_examples = test_steps * BATCH_SIZE
-                for step in range(test_steps):
-                    batch_features, batch_labels = next_batch(step, test_features, test_labels)
-                    loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_features, y: batch_labels})
-                    test_accuracy += (acc * len(batch_features))
-                    test_loss += (loss * len(batch_features))
-                test_loss /= num_examples
-                test_accuracy /= num_examples
+            test_loss, test_accuracy = eval_on_data(test_features, x, test_labels, y, loss_op, accuracy_op, sess)
             print("Test loss={:.4f}, Test accuracy={:.4f}".format(test_loss, test_accuracy))
 
 
