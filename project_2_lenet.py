@@ -89,6 +89,19 @@ def eval_on_data(features, x, labels, y, loss_op, acc_op, sess):
     return total_loss, total_acc
 
 
+def count_params():
+    total_parameters = 0
+    for i, tensor in enumerate(tf.trainable_variables()):
+        # shape is an array of tf.Dimension
+        shape = tensor.get_shape()
+        tensor_parameters = 1
+        for dim in shape:
+            tensor_parameters *= dim.value
+        print("Tensor {0}=[shape={1: <16} parameters={2}]".format((i + 1), "{},".format(shape), tensor_parameters))
+        total_parameters += tensor_parameters
+    print("Total parameters={}".format(total_parameters))
+
+
 def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epochs=1000):
     # Load data
     data = data_reader.read_pickle_sets(train_file, test_file)
@@ -107,6 +120,7 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
     y = tf.placeholder(tf.float32, (None, num_classes))
     # Create the LeNet.
     fc2 = create_lenet(x, num_classes)
+    count_params()
 
     loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(fc2, y))
     opt = tf.train.AdamOptimizer()
