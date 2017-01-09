@@ -140,7 +140,7 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
 
     with tf.Session() as sess:
         if save_file is None:
-            sess.run(tf.initialize_all_variables())
+            sess.run(tf.global_variables_initializer())
 
             # Progress bar
             epochs = tqdm(range(int(num_epochs)), desc="Training Model", file=sys.stdout, unit="Epoch")
