@@ -1,2 +1,2 @@
-model_checkpoint_path: "train_model-20170108-161404.ckpt"
-all_model_checkpoint_paths: "train_model-20170108-161404.ckpt"
+model_checkpoint_path: "train_model-20170108-194435.ckpt"
+all_model_checkpoint_paths: "train_model-20170108-194435.ckpt"
