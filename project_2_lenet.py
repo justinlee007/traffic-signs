@@ -143,8 +143,8 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
+        sess.run(tf.initialize_all_variables())
         if save_file is None:
-            sess.run(tf.initialize_all_variables())
 
             # Progress bar
             epochs = tqdm(range(int(num_epochs)), desc="Training Model", file=sys.stdout, unit="Epoch")
@@ -177,6 +177,7 @@ def run_lenet(train_file="train.p", test_file="test.p", save_file=None, num_epoc
             test_loss, test_accuracy = eval_on_data(test_features, x, test_labels, y, loss_op, accuracy_op, sess)
             epochs.write("Test loss={:.4f}, Test accuracy={:.4f}".format(test_loss, test_accuracy))
         else:
+            # tf.reset_default_graph()
             print("Restoring session from {}".format(save_file))
             saver.restore(sess, save_file)
 
