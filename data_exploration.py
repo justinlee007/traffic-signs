@@ -98,7 +98,7 @@ def plot_local_probs():
             current_value = prob_values[current_index]
             current_label = prob_labels[current_index]
             label = signnames[int(y_train[current_index])]
-            full_label = "{} (actual)\n{} ({:.0%})\n{} ({:.0%})\n{} ({:.0%})".format(
+            full_label = "{} (actual)\n{} ({:.1%})\n{} ({:.1%})\n{} ({:.1%})".format(
                 label,
                 signnames[current_label[0]], current_value[0],
                 signnames[current_label[1]], current_value[1],
